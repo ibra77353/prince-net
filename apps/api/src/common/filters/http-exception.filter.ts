@@ -30,10 +30,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const payload = this.buildPayload(exception);
 
-    this.logger.error(
-      `${request.method ?? '-'} ${request.url ?? '-'} → ${payload.statusCode} ${payload.body.code}`,
-      exception instanceof Error ? exception.stack : undefined,
-    );
+    // 4xx = client errors (auth, validation, not found) → warn without stack trace.
+    // 5xx = server errors → error with full stack trace for debugging.
+    if (payload.statusCode >= 500) {
+      this.logger.error(
+        `${request.method ?? '-'} ${request.url ?? '-'} → ${payload.statusCode} ${payload.body.code}`,
+        exception instanceof Error ? exception.stack : undefined,
+      );
+    } else {
+      this.logger.warn(
+        `${request.method ?? '-'} ${request.url ?? '-'} → ${payload.statusCode} ${payload.body.code}`,
+      );
+    }
 
     response.status(payload.statusCode).json(payload.body);
   }
