@@ -1,0 +1,67 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import type { Request } from 'express';
+import {
+  createPaymentSchema,
+  reversePaymentSchema,
+  paginationSchema,
+  type CreatePaymentInput,
+  type ReversePaymentInput,
+  type PaginationInput,
+} from '@prince-net/validation';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PaymentsService } from './payments.service';
+
+type AuthUser = { userId: string; email: string };
+
+@Controller()
+export class PaymentsController {
+  constructor(private readonly paymentsService: PaymentsService) {}
+
+  @Get('sales/:saleId/payments')
+  async listBySale(
+    @Param('saleId') saleId: string,
+    @Query(new ZodValidationPipe(paginationSchema)) query: PaginationInput,
+  ) {
+    return this.paymentsService.listBySale(saleId, query);
+  }
+
+  @Post('sales/:saleId/payments')
+  @HttpCode(HttpStatus.CREATED)
+  async create(
+    @Param('saleId') saleId: string,
+    @Body(new ZodValidationPipe(createPaymentSchema)) body: CreatePaymentInput,
+    @CurrentUser() user: AuthUser,
+    @Req() req: Request,
+  ) {
+    return this.paymentsService.create(saleId, body, user.userId, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+  }
+
+  @Post('payments/:id/reverse')
+  @HttpCode(HttpStatus.OK)
+  async reverse(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(reversePaymentSchema))
+    body: ReversePaymentInput,
+    @CurrentUser() user: AuthUser,
+    @Req() req: Request,
+  ) {
+    return this.paymentsService.reverse(id, body, user.userId, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+  }
+}

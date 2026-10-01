@@ -1,0 +1,30 @@
+{
+  "name": "prince-net",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prince Net Management System",
+  "packageManager": "pnpm@11.28.0",
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm -r --filter \"./packages/*\" build && pnpm -r --filter \"./apps/*\" build",
+    "start": "pnpm --filter @prince-net/api start:prod",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "prisma:generate": "pnpm --filter @prince-net/api prisma:generate",
+    "prisma:migrate": "pnpm --filter @prince-net/api prisma:migrate",
+    "prisma:deploy": "pnpm --filter @prince-net/api prisma:deploy",
+    "prisma:seed": "pnpm --filter @prince-net/api prisma:seed",
+    "prisma:studio": "pnpm --filter @prince-net/api prisma:studio",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules apps/*/dist packages/*/dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}

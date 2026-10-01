@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+**/dist/
+**/build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.*.example
+
+# Prisma generated/client artifacts (generated at install/build time)
+apps/api/src/generated/prisma/
+
+# Backups / runtime data
+backups/
+*.backup
+*.dump
+*.sql.gz
+*.tar.gz
+logs/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# IDE / OS
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Vite
+apps/web/.vite/
