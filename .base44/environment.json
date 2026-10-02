@@ -1,0 +1,19 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "JWT_SECRET",
+      "description": "JWT signing secret for auth tokens (min 32 chars). Auto-generated for development; replace with a real value for production.",
+      "requiredAtBoot": true,
+      "generatedForDevelopment": true
+    },
+    {
+      "name": "CSRF_SECRET",
+      "description": "CSRF double-submit cookie signing secret (min 16 chars). Auto-generated for development; replace with a real value for production.",
+      "requiredAtBoot": true,
+      "generatedForDevelopment": true
+    }
+  ]
+}

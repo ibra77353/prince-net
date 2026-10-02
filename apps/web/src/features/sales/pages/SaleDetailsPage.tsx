@@ -6,6 +6,8 @@ import {
   Banknote,
   CreditCard,
   Plus,
+  Printer,
+  Share2,
   ShoppingCart,
   Users,
 } from 'lucide-react';
@@ -42,6 +44,8 @@ import { ReversePaymentDialog } from '../../payments/components/ReversePaymentDi
 import { formatMoney } from '../../../lib/currency';
 import { formatDateTime } from '../../../lib/format';
 import { ApiClientError } from '../../../lib/api-client';
+import { useSettings } from '../../settings/hooks/useSettings';
+import { PrintableInvoice } from '../components/PrintableInvoice';
 
 const PAYMENTS_LIMIT = 25;
 
@@ -55,6 +59,7 @@ export function SaleDetailsPage() {
   const [reverseTarget, setReverseTarget] = useState<Payment | null>(null);
 
   const saleQuery = useSale(id);
+  const settingsQuery = useSettings();
   const cancelMutation = useCancelSale();
 
   const paymentsQuery = usePayments({
@@ -101,6 +106,27 @@ export function SaleDetailsPage() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSharePdf = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `فاتورة ${sale.invoiceNumber}`,
+          text: `فاتورة رقم ${sale.invoiceNumber} - ${formatMoney(sale.totalAmount)}`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({ title: 'تم نسخ رابط الفاتورة' });
+      }
+    } catch {
+      // user cancelled share — no action needed
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -115,15 +141,26 @@ export function SaleDetailsPage() {
           title={`فاتورة ${sale.invoiceNumber}`}
           description={formatDateTime(sale.saleDate)}
           actions={
-            !isCancelled && (
-              <Button
-                variant="destructive"
-                onClick={() => setCancelOpen(true)}
-              >
-                <AlertTriangle className="me-2 h-4 w-4" />
-                إلغاء الفاتورة
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrint}>
+                <Printer className="me-2 h-4 w-4" />
+                طباعة
               </Button>
-            )
+              <Button variant="outline" size="sm" onClick={handleSharePdf}>
+                <Share2 className="me-2 h-4 w-4" />
+                مشاركة
+              </Button>
+              {!isCancelled && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setCancelOpen(true)}
+                >
+                  <AlertTriangle className="me-2 h-4 w-4" />
+                  إلغاء الفاتورة
+                </Button>
+              )}
+            </div>
           }
         />
 
@@ -301,6 +338,9 @@ export function SaleDetailsPage() {
         payment={reverseTarget}
         saleId={sale.id}
       />
+
+      {/* Printable Invoice (hidden on screen, visible on print) */}
+      <PrintableInvoice sale={sale} settings={settingsQuery.data} />
     </div>
   );
 }

@@ -1,0 +1,110 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: prince_net
+      POSTGRES_PASSWORD: prince_net_pass
+      POSTGRES_DB: prince_net
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prince_net -d prince_net"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: on-failure
+
+  setup:
+    build:
+      context: .
+      dockerfile: Dockerfile.base44
+    volumes:
+      - .:/app:cached
+    env_file:
+      - .env.base44-defaults
+      - /run/base44/app.env
+    command:
+      [
+        "sh", "-ec",
+        "pnpm install --frozen-lockfile && pnpm -r --filter './packages/*' build && pnpm prisma:generate"
+      ]
+    restart: "no"
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.base44
+    volumes:
+      - .:/app:cached
+    env_file:
+      - .env.base44-defaults
+      - /run/base44/app.env
+    command: ["sh", "-ec", "pnpm prisma:deploy && pnpm prisma:seed"]
+    depends_on:
+      db:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.base44
+    volumes:
+      - .:/app:cached
+    env_file:
+      - .env.base44-defaults
+      - /run/base44/app.env
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: ["sh", "-ec", "exec pnpm --filter @prince-net/api dev"]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"require('http').get('http://localhost:3000/api/v1/auth/csrf',r=>process.exit(r.statusCode<600?0:1)).on('error',()=>process.exit(1))\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
+    restart: on-failure
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.base44
+    volumes:
+      - .:/app:cached
+    ports:
+      - "3000:5173"
+    env_file:
+      - .env.base44-defaults
+      - /run/base44/app.env
+    environment:
+      - API_PROXY_TARGET=http://api:3000
+      - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
+    command: ["sh", "-ec", "exec pnpm --filter @prince-net/web dev"]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"require('http').get('http://localhost:5173/',r=>process.exit(r.statusCode<600?0:1)).on('error',()=>process.exit(1))\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    restart: on-failure
+
+volumes:
+  pgdata:
