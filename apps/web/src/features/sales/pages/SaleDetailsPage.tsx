@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowRight,
@@ -51,6 +51,8 @@ const PAYMENTS_LIMIT = 25;
 
 export function SaleDetailsPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const shouldAutoPrint = searchParams.get('print') === '1';
   const { toast } = useToast();
 
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -61,6 +63,14 @@ export function SaleDetailsPage() {
   const saleQuery = useSale(id);
   const settingsQuery = useSettings();
   const cancelMutation = useCancelSale();
+
+  // Auto-trigger print when opened with ?print=1 (from sales list)
+  useEffect(() => {
+    if (shouldAutoPrint && saleQuery.isSuccess && settingsQuery.isSuccess) {
+      const timer = setTimeout(() => window.print(), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAutoPrint, saleQuery.isSuccess, settingsQuery.isSuccess]);
 
   const paymentsQuery = usePayments({
     saleId: id,

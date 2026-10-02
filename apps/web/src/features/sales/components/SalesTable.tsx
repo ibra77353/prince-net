@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart } from 'lucide-react';
+import { Printer, ShoppingCart } from 'lucide-react';
 import type { Sale } from '@prince-net/types';
 import {
   Table,
@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '../../../components/ui/table';
 import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
 import { EmptyState } from '../../../components/ui/empty-state';
 import { formatMoney } from '../../../lib/currency';
 import { formatDateTime } from '../../../lib/format';
@@ -38,6 +39,7 @@ export function SalesTable({ data }: SalesTableProps) {
             <TableHead>التاريخ</TableHead>
             <TableHead>الإجمالي</TableHead>
             <TableHead>الحالة</TableHead>
+            <TableHead className="text-center">إجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -63,6 +65,19 @@ export function SalesTable({ data }: SalesTableProps) {
                 >
                   {sale.status === 'ACTIVE' ? 'نشطة' : 'ملغاة'}
                 </Badge>
+              </TableCell>
+              <TableCell className="text-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  title="طباعة / PDF"
+                  onClick={() =>
+                    window.open(`/sales/${sale.id}?print=1`, '_blank')
+                  }
+                >
+                  <Printer className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
