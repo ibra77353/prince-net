@@ -99,7 +99,29 @@ export class HttpExceptionFilter implements ExceptionFilter {
       return this.fromPrismaError(exception);
     }
 
-    // 4. Unknown
+    // 4. Errors with a statusCode property (e.g. csrf-csrf ForbiddenError)
+    if (
+      exception !== null &&
+      typeof exception === 'object' &&
+      'statusCode' in exception &&
+      typeof (exception as { statusCode: unknown }).statusCode === 'number'
+    ) {
+      const err = exception as {
+        statusCode: number;
+        message: string;
+        code?: string;
+      };
+      return {
+        statusCode: err.statusCode,
+        body: {
+          success: false,
+          message: err.message,
+          code: err.code ?? this.codeFromStatus(err.statusCode),
+        },
+      };
+    }
+
+    // 5. Unknown
     const message =
       exception instanceof Error ? exception.message : 'Internal server error';
 
